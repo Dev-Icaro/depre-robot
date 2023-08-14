@@ -1,49 +1,42 @@
 import os
-#import fdb
-import firebirdsql
 from utils.path import get_pdfs_folder_path
-from utils.pdf import extract_depre_numbers
+from helpers.pdf import read_depre_pdf
+from helpers.database import search_depres_in_chunks, search_depres
+from db.database import database
+
+DEPRE_SEARCH_LIMIT = 1000
 
 pdf_folder = get_pdfs_folder_path()
 
-#for pdf_name in os.listdir(pdf_folder):
-  #pdf_path = os.path.join(pdf_folder, pdf_name)
-
-#  depre_numbers = extract_depre_numbers(pdf_path)
-
-  #print(f"Foram encontrados {len(depre_numbers)} DEPRES no pdf {pdf_name}")
-
-
-print("Conectando ao banco de dados")
-
-host = 'node113446-s1info.jelastic.saveincloud.net'
-port = 11235
-database = '/opt/firebird/data/ASM.FDB'
-user = 'SYSDBA'
-password = 'DZ1Y7M9JR6fJvhVu0iK1'
-
-#conn_string = f"hostname={host};database={database};user={user};password={password}"
-
-connection = None
 try:
-  connection = firebirdsql.connect(
-    host=host,
-    port=port,
-    database=database,
-    user=user,
-    password=password,
-    charset='UTF8'
-  )
-  print("Conexão bem-sucedida! Iniciando consulta...")
+  for pdf_name in os.listdir(pdf_folder):
+    pdf_path = os.path.join(pdf_folder, pdf_name)
 
-  query = f'SELECT nr_depre FROM processos_incidentes WHERE nr_depre = '
+    pdf = read_depre_pdf(pdf_path)
+    depres = pdf.extract_depre_numbers()
 
-except:
-  print("Falha ao conectar com o banco de dados")
+    if depres.count > 0:
+      print(f'\nO PDF "{depres.pdf_name}" contém {depres.count} Depre(s), iniciando conferência ...')
+
+    if (depres.count > DEPRE_SEARCH_LIMIT):
+      db_depres_matched = search_depres_in_chunks(depres.numbers)
+    else:
+      db_depres_matched = search_depres(depres.numbers)
+
+    if db_depres_matched.count > 0:
+      print(f'Foram encontrados {len(db_depres_matched)} Depre(s) correspondente(s) em nossa base de dados no PDF "{depres.pdf_name}".\n---\n')
+      db_depres_matched = list(set(item[0] for item in db_depres_matched))
+
+    else: 
+      print(f'Não foi encontrado nenhum Nº de Depre correspondente em nossa base de dados no PDF "{depres.pdf_name}".\n---\n')
+    
+except Exception as e:
+  print(e)
 
 finally:
-  if connection:
-    connection.close()
+  database.disconnect()
+
+  
 
 
 
