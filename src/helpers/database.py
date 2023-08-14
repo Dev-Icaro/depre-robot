@@ -2,9 +2,15 @@ import math
 from db.database import read_sql
 
 class DepreSearchResult:
-  def __init__(self, matched_depres):
-    self.matched_depres = matched_depres
-    self.count = len(matched_depres)
+  def __init__(self, database_depres):
+    self.depres = database_depres
+    self.count = len(database_depres)
+
+
+class DatabaseDepre:
+  def __init__(self, depre_number, nr_proc):
+    self.number = depre_number
+    self.nr_proc = nr_proc
 
 def search_depres_in_chunks(depre_numbers):
   matched_depres = []
@@ -22,7 +28,7 @@ def search_depres_in_chunks(depre_numbers):
 
     if result is not None:
       for row in result:
-        matched_depres.append(row)
+        matched_depres.append(DatabaseDepre(row[0], row[1]))
 
   return DepreSearchResult(matched_depres)
 
@@ -35,7 +41,7 @@ def search_depres(depre_numbers):
 
   if result is not None:
     for row in result:
-      matched_depres.append(row)
+      matched_depres.append(DatabaseDepre(row[0], row[1]))
 
   return DepreSearchResult(matched_depres)
 
@@ -44,6 +50,10 @@ def format_depre_query(depre_numbers):
   formated_nums = ["'{}'".format(element) for element in depre_numbers]
   formated_nums = ','.join(formated_nums)
 
-  query = f'SELECT nr_depre FROM processos_incidentes WHERE nr_depre IN ({formated_nums})'
+  query = f'''
+      SELECT pi.nr_depre, proc.nr_processo FROM processos_incidentes pi
+      LEFT JOIN processos proc on proc.id_processo = pi.id_processo
+      WHERE nr_depre IN ({formated_nums})
+    '''
 
   return query
