@@ -12,3 +12,10 @@ def get_pdfs_folder_path():
    pdf_folder = os.path.join(working_path, 'pdfs')
 
    return pdf_folder
+
+
+def get_xls_folder_path():
+   working_path = os.path.abspath(os.getcwd())
+   xls_folder = os.path.join(working_path, 'xls')
+
+   return xls_folder
