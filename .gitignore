@@ -3,4 +3,8 @@ dbxconnections.ini
 .vscode
 xls
 *.pdf
+*.log
+DepreRobot.exe
 pdfs
+dist
+build

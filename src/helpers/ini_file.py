@@ -1,49 +1,32 @@
-# Libs
-from utils.fileUtils import fileExists
+import os
+import sys
+from utils.path import get_current_path
 
-# Variveis globais 
-import config.globals as globals
 
 class iniFile:
-   def __init__(self):
-      self.path = rf'{globals.DIR}\IntelectualSys.ini'
+    def __init__(self):
+        self.path = rf"{get_current_path()}\dbxconnections.ini"
 
-      if (not fileExists(self.path)):
-         raise FileNotFoundError(f'O arquivo ini: {self.path} não foi encontrado!')
-      
-      self.readIniFile()
+        if not os.path.exists(self.path):
+            msg = f"O arquivo ini: {self.path} não foi encontrado! Finalizando ..."
+            sys.exit(msg)
 
+        self.readIniFile()
 
-   def readIniFile(self):
-      with open(self.path, 'r', encoding='UTF-8') as ini:
-         self.lines = clearTextLines(ini.readlines())
+    def readIniFile(self):
+        with open(self.path, "r", encoding="UTF-8") as ini:
+            self.lines = clearTextLines(ini.readlines())
 
+    def getValue(self, valueName):
+        value = ""
 
-   def getValue(self, valueName):
-      value = ''
+        for line in self.lines:
+            if valueName in line:
+                startPos = line.find("=") + 1
+                value = line[startPos : len(line)]
 
-      for line in self.lines:
-         if valueName in line:
-            startPos = line.find('=') + 1
-            value = line[startPos : len(line)]
-            
-            return value
+                return value
 
 
 def clearTextLines(lines):
-   return [line.rstrip() for line in lines]
-         
-
-
-      
-
-      
-
-
-      
-
-
-
-
-
-    
+    return [line.rstrip() for line in lines]

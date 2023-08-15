@@ -3,6 +3,7 @@ import re
 import os
 from utils.colors import Colors
 from utils.message_formatter import MessageFormatter
+from helpers.logger import logger
 
 REGEX_DEPRE_NUM = r"DEPRE Nº: (\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})"
 REGEX_ORDEM_CRONOLOGICA = r"Ordem Cronológica: (\d+/\d+)"
@@ -20,10 +21,6 @@ class DeprePdf:
         depre_numbers = []
         depre_ordens_cron = []
 
-        print(
-            "Iniciando leitura do PDF: " + Colors.BLUE + self.name + Colors.END + ".\n"
-        )
-
         with pdfplumber.open(self.path) as pdf:
             page_count = len(pdf.pages)
 
@@ -35,7 +32,7 @@ class DeprePdf:
                 depre_numbers += re.findall(REGEX_DEPRE_NUM, page_text)
                 depre_ordens_cron += re.findall(REGEX_ORDEM_CRONOLOGICA, page_text)
 
-        print(Colors.GREEN + "\nLeitura finalizada com sucesso!" + Colors.END)
+        logger.info("Leitura finalizada com sucesso!")
 
         depre_numbers = [extract_numbers(number) for number in depre_numbers]
         depres = union_depre_data(depre_numbers, depre_ordens_cron)

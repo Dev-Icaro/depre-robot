@@ -34,6 +34,7 @@ def write_xls(file_name, data_frame):
 class UnionDepresResult:
     def __init__(self, xls_depres):
         self.xls_depres = xls_depres
+        self.count = len(xls_depres)
 
     def to_object(self):
         nr_proc = []
@@ -60,7 +61,16 @@ def union_depre_results(database_depres, pdf_depres):
         for pdf_depre in pdf_depres.depres:
             if db_depre.number == pdf_depre.number:
                 xls_depres.append(
-                    XlsDepre(db_depre.number, db_depre.nr_proc, pdf_depre.ordem_cron)
+                    XlsDepre(
+                        format_depre_number(db_depre.number),
+                        db_depre.nr_proc,
+                        pdf_depre.ordem_cron,
+                    )
                 )
 
     return UnionDepresResult(xls_depres)
+
+
+def format_depre_number(depre_number):
+    if len(depre_number) > 0:
+        return f"{depre_number[:7]}-{depre_number[7:9]}.{depre_number[9:13]}.{depre_number[13]}.{depre_number[14:16]}.{depre_number[16:len(depre_number)]}"
