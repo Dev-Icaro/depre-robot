@@ -1,6 +1,8 @@
 import math
 from db.database import read_sql
 
+DEPRE_SEARCH_LIMIT = 1000
+
 class DepreSearchResult:
   def __init__(self, database_depres):
     self.depres = database_depres
@@ -33,7 +35,7 @@ def search_depres_in_chunks(depre_numbers):
   return DepreSearchResult(matched_depres)
 
 
-def search_depres(depre_numbers):
+def search_depres_single_query(depre_numbers):
   matched_depres = []
 
   query = format_depre_query(depre_numbers)
@@ -44,6 +46,14 @@ def search_depres(depre_numbers):
       matched_depres.append(DatabaseDepre(row[0], row[1]))
 
   return DepreSearchResult(matched_depres)
+
+def search_db_matching_depres(depre_numbers):
+  if (len(depre_numbers) > DEPRE_SEARCH_LIMIT):
+    matched_depres = search_depres_in_chunks(depre_numbers)
+  else:
+    matched_depres = search_depres_single_query(depre_numbers)
+
+  return matched_depres
 
 
 def format_depre_query(depre_numbers):

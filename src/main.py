@@ -1,95 +1,53 @@
 import os, sys, time
-from utils.path import get_pdfs_folder_path, get_current_path
-from utils.files import change_file_extension
+from utils.path import get_pdfs_folder_path
 from helpers.pdf import read_depre_pdf
-from helpers.database import search_depres_in_chunks, search_depres
+from helpers.database import search_db_matching_depres
 from helpers.logger import log
-from helpers.xls import write_xls
+from helpers.xls import write_xls, union_depre_results
+from utils.colors import Colors
 from db.database import database
-from helpers.xls import XlsDepre
-import pandas as pd
+from utils.message_formatter import MessageFormatter
 
-class UnionDepresResult:
-  def __init__(self, xls_depres):
-    self.xls_depres = xls_depres
-
-  def to_object(self):
-    nr_proc = []
-    nr_depre = []
-    ordem_cron = []
-
-    for depre in self.xls_depres:
-      nr_proc.append(depre.nr_proc)
-      nr_depre.append(depre.nr_depre)
-      ordem_cron.append(depre.ordem_cron)
-
-    xls_object = { "nro_depre": nr_depre, "nr_proc": nr_proc, "ordem_cron": ordem_cron }
-    return xls_object
-
-
-def union_depre_results(database_depres, pdf_depres):
-  xls_depres = []
-
-  for db_depre in database_depres.depres:
-    for pdf_depre in pdf_depres.depres:
-      if db_depre.number == pdf_depre.number:
-        xls_depres.append(XlsDepre(db_depre.number, db_depre.nr_proc, pdf_depre.ordem_cron))
-
-  return UnionDepresResult(xls_depres)
-
-
-DEPRE_SEARCH_LIMIT = 1000
 
 pdf_folder = get_pdfs_folder_path()
-search_result = []
+timestamp = int(time.time())
+xls_file_name = f"conferencia_{timestamp}.xlsx"
 
 try:
-  for pdf_name in os.listdir(pdf_folder):
-    pdf_path = os.path.join(pdf_folder, pdf_name)
+    for pdf_name in os.listdir(pdf_folder):
+        pdf_path = os.path.join(pdf_folder, pdf_name)
 
-    pdf = read_depre_pdf(pdf_path)
-    depres = pdf.extract_depres()
+        pdf = read_depre_pdf(pdf_path)
+        depres = pdf.extract_depres()
 
-    if depres.count > 0:
-      print(f'\nO PDF "{pdf_name}" contém {depres.count} Depre(s), iniciando conferência ...')
+        if depres.count > 0:
+            print(MessageFormatter.starting_conference(pdf_name, depres.count))
+        else:
+            print(f'Não foi encontrado nenhum Nº de Depre no PDF "{pdf_name}".\n---\n')
+            continue
 
-    depre_numbers = depres.get_numbers()
+        depre_numbers = depres.get_numbers()
+        matched_depres = search_db_matching_depres(depre_numbers)
 
-    if (depres.count > DEPRE_SEARCH_LIMIT):
-      matched_depres = search_depres_in_chunks(depre_numbers)
-    else:
-      matched_depres = search_depres(depre_numbers)
+        if matched_depres.count > 0:
+            print(MessageFormatter.search_result(pdf_name, matched_depres.count))
 
-    if matched_depres.count > 0:
-      print(f'Foram encontrados {matched_depres.count} Depre(s) correspondente(s) em nossa base de dados no PDF "{pdf_name}".\n---\n')
+            xls_depres = union_depre_results(matched_depres, depres)
+            xls_object = xls_depres.to_object()
+            xls_object["arquivo"] = pdf_name
 
-      xls_depres = union_depre_results(matched_depres, depres)
-      xls_object = xls_depres.to_object()
-      xls_object['arquivo'] = pdf_name
+            write_xls(xls_file_name, xls_object)
+        else:
+            print(
+                f'Não foi encontrado nenhum Nº de Depre correspondente em nossa base de dados no PDF "{pdf_name}".\n---\n'
+            )
 
-      search_result.append(xls_object)
+        MessageFormatter.conference_success(xls_file_name)
 
-    else: 
-      print(f'Não foi encontrado nenhum Nº de Depre correspondente em nossa base de dados no PDF "{pdf_name}".\n---\n')
-
-  if len(search_result) > 0:
-    timestamp = int(time.time())
-    xls_file_name = f"conferencia_{timestamp}.xlsx"
-
-    for result in search_result:
-      write_xls(xls_file_name, result)
-
-    
 except Exception as e:
-  print(e)
-  log(e)
+    print(Colors.RED + f"Erro: {e}" + Colors.END)
+    log(e)
 
 finally:
-  database.disconnect()
-  sys.exit('\nFinalizando ...\n---')
-
-  
-
-
-
-
+    database.disconnect()
+    sys.exit(Colors.GREY + "\nFinalizando ... Até mais!" + Colors.END + "\n")

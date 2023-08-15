@@ -1,2 +1,6 @@
 venv
 dbxconnections.ini
+.vscode
+xls
+*.pdf
+pdfs
