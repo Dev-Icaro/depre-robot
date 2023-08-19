@@ -12,6 +12,9 @@ def get_pdfs_folder_path():
     working_path = os.path.abspath(os.getcwd())
     pdf_folder = os.path.join(working_path, "pdfs")
 
+    if not os.path.exists(pdf_folder):
+        os.mkdir(pdf_folder)
+
     return pdf_folder
 
 

@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import time
 from utils.path import get_xls_folder_path
 
 
@@ -48,8 +49,8 @@ class UnionDepresResult:
 
         xls_object = {
             "nr_depre": nr_depre,
-            "nr_proc": nr_proc,
             "ordem_cron": ordem_cron,
+            "nr_proc": nr_proc,
         }
         return xls_object
 
@@ -63,7 +64,7 @@ def union_depre_results(database_depres, pdf_depres):
                 xls_depres.append(
                     XlsDepre(
                         format_depre_number(db_depre.number),
-                        db_depre.nr_proc,
+                        format_depre_number(pdf_depre.proc_number),
                         pdf_depre.ordem_cron,
                     )
                 )
@@ -74,3 +75,8 @@ def union_depre_results(database_depres, pdf_depres):
 def format_depre_number(depre_number):
     if len(depre_number) > 0:
         return f"{depre_number[:7]}-{depre_number[7:9]}.{depre_number[9:13]}.{depre_number[13]}.{depre_number[14:16]}.{depre_number[16:len(depre_number)]}"
+
+
+def generate_xls_file_name():
+    timestamp = int(time.time())
+    return f"conferencia_{timestamp}.xlsx"
