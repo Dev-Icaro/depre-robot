@@ -73,8 +73,10 @@ def union_depre_results(database_depres, pdf_depres):
 
 
 def format_depre_number(depre_number):
-    if len(depre_number) > 0:
+    if len(depre_number) == 20:
         return f"{depre_number[:7]}-{depre_number[7:9]}.{depre_number[9:13]}.{depre_number[13]}.{depre_number[14:16]}.{depre_number[16:len(depre_number)]}"
+
+    return depre_number
 
 
 def generate_xls_file_name():

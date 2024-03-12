@@ -8,3 +8,5 @@ DepreRobot.exe
 pdfs
 dist
 build
+__pycache__
+__pycache__/*

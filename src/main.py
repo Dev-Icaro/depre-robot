@@ -15,8 +15,10 @@ try:
         raise Exception("Nenhum pdf encontrado para conferência")
 
     xls_file_name = generate_xls_file_name()
-    count_depres_analyzed = 0
     start_time = time.time()
+
+    count_depres_analyzed = 0
+    count_depres_matched = 0
 
     for i, pdf_name in enumerate(os.listdir(pdf_folder)):
         logger.info(f"Iniciando leitura do PDF: {pdf_name}. ({i + 1}/{pdf_count})")
@@ -31,10 +33,11 @@ try:
             logger.info(f'Não foi encontrado nenhum Nº de Depre no PDF "{pdf_name}".')
             continue
 
-        count_depres_analyzed += depres.count
-
         depre_numbers = depres.get_numbers()
         matched_depres = search_db_matching_depres(depre_numbers)
+
+        count_depres_analyzed += depres.count
+        count_depres_matched += matched_depres.count
 
         if not matched_depres.is_empty():
             logger.info(MessageFormatter.search_result(pdf_name, matched_depres.count))
@@ -53,11 +56,10 @@ try:
     analytics = calc_analytics(start_time, end_time, count_depres_analyzed)
 
     logger.info(MessageFormatter.conference_success(xls_file_name))
-
     logger.info(
         MessageFormatter.analytics(
             count_depres_analyzed,
-            xls_depres.count,
+            count_depres_matched,
             analytics.process_time,
             analytics.depres_per_second,
         ),
@@ -69,7 +71,7 @@ except Exception as e:
 finally:
     database.disconnect()
 
-    input("Pressione enter para finalizar ...")
+    input("Pressione ENTER para finalizar ...")
 
     logger.info("Finalizando ... Até mais!")
     sys.exit()

@@ -14,7 +14,10 @@ def format_process_time(process_time):
 def calc_depres_analyzed_per_sec(process_time, count_depres_analyzed):
     seconds = int(process_time)
 
-    return int(count_depres_analyzed / seconds)
+    if seconds > 0:
+        return int(count_depres_analyzed / seconds)
+
+    return count_depres_analyzed
 
 
 def calc_analytics(start_time, end_time, count_depres_analyzed):

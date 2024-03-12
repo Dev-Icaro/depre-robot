@@ -99,9 +99,9 @@ def extract_db_url_values(url):
 logger.info("Olá, Bem-vindo(a) ao depre-robot! Iniciando ...")
 
 ini = iniFile()
-db_url = ini.getValue("Database")
+db_url = ini.get_value("Database")
 
-password = ini.getValue("Code_Connection")
+password = ini.get_value("Code_Connection")
 host, port, db, user = extract_db_url_values(db_url)
 
 database = Database()

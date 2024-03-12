@@ -1,13 +1,12 @@
 import pdfplumber
 import re
 import os
-from utils.colors import Colors
 from utils.message_formatter import MessageFormatter
 from helpers.logger import logger
 
-REGEX_DEPRE_NUM = r"DEPRE Nº: (\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})"
-REGEX_ORDEM_CRONOLOGICA = r"Ordem Cronológica: (\d+/\d+)"
-REGEX_PROC_NUM = r"Nº de autos: (\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})"
+REGEX_DEPRE_NUM = r"DEPRE\s+Nº:\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})"
+REGEX_ORDEM_CRONOLOGICA = r"Ordem\s+Cronológica:\s+(\d+/\d+)"
+REGEX_PROC_NUM = r"Nº\s+de\s+autos:\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})|Nº\s+de\s+autos:\s+(\d+/\d+)"
 
 
 class DeprePdf:
@@ -25,19 +24,23 @@ class DeprePdf:
 
         with pdfplumber.open(self.path) as pdf:
             page_count = len(pdf.pages)
+            page_text = ""
 
             for page_num, page in enumerate(pdf.pages, start=1):
                 print(MessageFormatter.processing_page(page_num, page_count))
+                page_text += page.extract_text()
 
-                page_text = page.extract_text()
-
-                depre_numbers += re.findall(REGEX_DEPRE_NUM, page_text)
-                depre_ordens_cron += re.findall(REGEX_ORDEM_CRONOLOGICA, page_text)
-                depre_proc_numbers += re.findall(REGEX_PROC_NUM, page_text)
+            depre_numbers += re.findall(REGEX_DEPRE_NUM, page_text)
+            depre_ordens_cron += re.findall(REGEX_ORDEM_CRONOLOGICA, page_text)
+            depre_proc_numbers += re.findall(REGEX_PROC_NUM, page_text)
 
         logger.info("Leitura finalizada com sucesso!")
 
         depre_numbers = [extract_numbers(number) for number in depre_numbers]
+
+        depre_proc_numbers = [
+            match[0] if match[0] else match[1] for match in depre_proc_numbers
+        ]
         depre_proc_numbers = [extract_numbers(number) for number in depre_proc_numbers]
 
         depres = union_depre_data(depre_numbers, depre_ordens_cron, depre_proc_numbers)
@@ -50,14 +53,12 @@ def extract_numbers(s):
 
 
 def union_depre_data(depre_numbers, depre_ordens_cron, depre_proc_numbers):
-    if not len(depre_numbers) == len(depre_ordens_cron) and len(depre_numbers) == len(
-        depre_proc_numbers
-    ):
-        raise f"""
-          A quantidade de Nº Depres: {len(depre_numbers)} 
-          é diferente da quantidade de Ordens cronológicas: {len(depre_ordens_cron)}, 
-          favor entrar em contato com o desenvolvedor: Icaro
-        """
+    if not len(depre_numbers) == len(depre_ordens_cron) == len(depre_proc_numbers):
+        raise Exception(
+            f"""
+        A quantidade de Nº Depres: {len(depre_numbers)}, Ordens cronológicas: {len(depre_ordens_cron)}, Nº de autos: {len(depre_proc_numbers)},
+        não são iguais favor entrar em contato com o desenvolvedor: Icaro"""
+        )
 
     depres = []
 
