@@ -6,7 +6,8 @@ from helpers.logger import logger
 
 REGEX_DEPRE_NUM = r"DEPRE\s+Nº:\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})"
 REGEX_ORDEM_CRONOLOGICA = r"Ordem\s+Cronológica:\s+(\d+/\d+)"
-REGEX_PROC_NUM = r"Nº\s+de\s+autos:\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})|Nº\s+de\s+autos:\s+(\d+/\d+)"
+# REGEX_PROC_NUM = r"Nº\s+de\s+autos:\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})|Nº\s+de\s+autos:\s+(\d+/\d+)"
+REGEX_PROC_NUM = r"Nº\s+de\s+autos:\s+(.*?)(?=\n|$|\s+)"
 
 
 class DeprePdf:
@@ -37,11 +38,11 @@ class DeprePdf:
         logger.info("Leitura finalizada com sucesso!")
 
         depre_numbers = [extract_numbers(number) for number in depre_numbers]
-
-        depre_proc_numbers = [
-            match[0] if match[0] else match[1] for match in depre_proc_numbers
-        ]
         depre_proc_numbers = [extract_numbers(number) for number in depre_proc_numbers]
+
+        # depre_proc_numbers = [
+        #     match[0] if match[0] else match[1] for match in depre_proc_numbers
+        # ]
 
         depres = union_depre_data(depre_numbers, depre_ordens_cron, depre_proc_numbers)
 
